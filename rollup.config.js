@@ -4,7 +4,7 @@ import { exec } from "child_process";
 import { homedir } from "os";
 import { promisify } from "util";
 
-const filename = "openrct2-time-control.js";
+const filename = "openrct2-bridge.js";
 const isDev = (process.env.BUILD || "development") === "development";
 
 async function getOutput() {

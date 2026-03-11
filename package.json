@@ -1,7 +1,7 @@
 {
-    "name": "openrct2-time-control",
+    "name": "openrct2-bridge",
     "version": "0.1.0",
-    "description": "OpenRCT2 plugin for headless simulation control",
+    "description": "OpenRCT2 plugin exposing game actions, state queries, and tick-stepping over TCP for programmatic control",
     "author": "TycoonBench",
     "license": "MIT",
     "type": "module",
