@@ -23,7 +23,8 @@ function getStatus(): object {
             day: date.day,
             month: date.month,
             year: date.year,
-            ticksElapsed: date.ticksElapsed,
+            engineTicks: date.ticksElapsed,
+            scenarioTicks: timeControl.getScenarioTicks(),
         },
     };
 }

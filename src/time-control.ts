@@ -6,12 +6,14 @@
 
 var _autoPaused = false;
 var _advancing = false;
+var _scenarioStartTick = 0;
 
 /** Auto-pause on first tick so no pre-paused save file is needed. */
 export function initAutoPause(): void {
     context.subscribe("interval.tick", function () {
         if (!_autoPaused) {
             _autoPaused = true;
+            _scenarioStartTick = date.ticksElapsed;
             context.executeAction("pausetoggle", {}, function () {
                 console.log("[openrct2-bridge] Auto-paused on first tick");
             });
@@ -21,6 +23,7 @@ export function initAutoPause(): void {
     // Reset flag on scenario change so auto-pause fires again
     context.subscribe("map.changed", function () {
         _autoPaused = false;
+        _scenarioStartTick = 0;
     });
 }
 
@@ -37,12 +40,11 @@ function advanceTicks(params: { ticks?: number } | undefined, reply: (response: 
     }
 
     _advancing = true;
-    var remaining = ticks;
     var startTick = date.ticksElapsed;
+    var targetTick = startTick + ticks;
 
     function onTick(): void {
-        remaining--;
-        if (remaining <= 0) {
+        if (date.ticksElapsed >= targetTick) {
             sub.dispose();
             // Re-pause the game
             context.executeAction("pausetoggle", {}, function () {
@@ -50,7 +52,7 @@ function advanceTicks(params: { ticks?: number } | undefined, reply: (response: 
                 reply({
                     success: true,
                     payload: {
-                        ticksAdvanced: ticks,
+                        ticksAdvanced: date.ticksElapsed - startTick,
                         startTick: startTick,
                         endTick: date.ticksElapsed,
                         paused: context.paused,
@@ -68,6 +70,11 @@ function advanceTicks(params: { ticks?: number } | undefined, reply: (response: 
             // Ticks will now fire, onTick counts them down
         });
     }
+}
+
+/** Ticks elapsed since the current scenario was loaded. */
+export function getScenarioTicks(): number {
+    return date.ticksElapsed - _scenarioStartTick;
 }
 
 export function handleTimeControl(endpoint: string, params: object | undefined, reply: (response: object) => void): boolean {
