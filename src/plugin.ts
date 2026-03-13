@@ -1,5 +1,6 @@
 /// <reference path="../lib/openrct2.d.ts" />
 
+import * as actions from "./actions";
 import * as timeControl from "./time-control";
 
 var PORT = 9090;
@@ -50,7 +51,12 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
         return;
     }
 
-    reply({ success: false, error: "Unknown endpoint: " + request.endpoint });
+    // Game actions (auto-generated)
+    if (actions.handleActions(request.endpoint, request.params, reply)) {
+        return;
+    }
+
+    reply({ success: false, error: "unknown_endpoint", message: "Unknown endpoint: " + request.endpoint });
 }
 
 // ── TCP server ───────────────────────────────────────────────────────
