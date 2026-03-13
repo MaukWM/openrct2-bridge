@@ -5,7 +5,7 @@ import * as timeControl from "./time-control";
 
 var PORT = 9090;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "0.1.0";
+var PLUGIN_VERSION = "1.0.0";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
