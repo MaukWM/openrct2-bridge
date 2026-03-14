@@ -4,25 +4,23 @@
  * Time control module — pause, unpause, advance_ticks.
  */
 
-var _autoPaused = false;
 var _advancing = false;
 var _scenarioStartTick = 0;
+var _scenarioStartRecorded = false;
 
-/** Auto-pause on first tick so no pre-paused save file is needed. */
-export function initAutoPause(): void {
+/** Track when the scenario starts. */
+export function initScenarioTracking(): void {
     context.subscribe("interval.tick", function () {
-        if (!_autoPaused) {
-            _autoPaused = true;
+        if (!_scenarioStartRecorded) {
+            _scenarioStartRecorded = true;
             _scenarioStartTick = date.ticksElapsed;
-            context.executeAction("pausetoggle", {}, function () {
-                console.log("[openrct2-bridge] Auto-paused on first tick");
-            });
+            console.log("[openrct2-bridge] Scenario start tick: " + _scenarioStartTick);
         }
     });
 
-    // Reset flag on scenario change so auto-pause fires again
+    // Reset on scenario change so we re-record on the next scenario
     context.subscribe("map.changed", function () {
-        _autoPaused = false;
+        _scenarioStartRecorded = false;
         _scenarioStartTick = 0;
     });
 }

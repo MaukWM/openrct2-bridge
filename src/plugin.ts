@@ -5,7 +5,7 @@ import * as timeControl from "./time-control";
 
 var PORT = 9090;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.0.0";
+var PLUGIN_VERSION = "1.0.1";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
@@ -112,7 +112,7 @@ function startServer(): void {
 
 function main(): void {
     console.log("[" + PLUGIN_NAME + "] Plugin loaded");
-    timeControl.initAutoPause();
+    timeControl.initScenarioTracking();
     startServer();
 }
 
