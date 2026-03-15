@@ -2,10 +2,11 @@
 
 import * as actions from "./actions";
 import * as timeControl from "./time-control";
+import * as state from "./state";
 
 var PORT = 9090;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.0.1";
+var PLUGIN_VERSION = "1.1.0";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
@@ -53,6 +54,11 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
 
     // Game actions (auto-generated)
     if (actions.handleActions(request.endpoint, request.params, reply)) {
+        return;
+    }
+
+    // State queries (sync reads)
+    if (state.handleQuery(request.endpoint, request.params, reply)) {
         return;
     }
 
