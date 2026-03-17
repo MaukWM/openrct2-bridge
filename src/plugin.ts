@@ -6,7 +6,7 @@ import * as state from "./state";
 
 var PORT = 9090;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.1.0";
+var PLUGIN_VERSION = "1.1.1";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 

@@ -4,6 +4,7 @@
  * Time control module — pause, unpause, advance_ticks.
  */
 
+var PROGRESS_INTERVAL = 100;
 var _advancing = false;
 var _scenarioStartTick = 0;
 var _scenarioStartRecorded = false;
@@ -40,8 +41,18 @@ function advanceTicks(params: { ticks?: number } | undefined, reply: (response: 
     _advancing = true;
     var startTick = date.ticksElapsed;
     var targetTick = startTick + ticks;
+    var lastProgressTick = 0;
 
     function onTick(): void {
+        var elapsed = date.ticksElapsed - startTick;
+
+        // Send progress heartbeat every PROGRESS_INTERVAL ticks (but not on the final tick).
+        // Uses >= instead of modulo so a skipped tick doesn't silently miss a heartbeat.
+        if (elapsed - lastProgressTick >= PROGRESS_INTERVAL && date.ticksElapsed < targetTick) {
+            lastProgressTick = elapsed;
+            reply({ type: "progress", ticksElapsed: elapsed, target: ticks });
+        }
+
         if (date.ticksElapsed >= targetTick) {
             sub.dispose();
             // Re-pause the game
