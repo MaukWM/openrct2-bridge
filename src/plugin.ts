@@ -4,7 +4,8 @@ import * as actions from "./actions";
 import * as timeControl from "./time-control";
 import * as state from "./state";
 
-var PORT = 9090;
+var BASE_PORT = 20020;
+var MAX_PORT = 65535;
 var PLUGIN_NAME = "openrct2-bridge";
 var PLUGIN_VERSION = "1.1.1";
 
@@ -68,7 +69,30 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
 // ── TCP server ───────────────────────────────────────────────────────
 
 function startServer(): void {
+    var port = BASE_PORT;
     var server = network.createListener();
+
+    // Try ports incrementally until one binds.
+    // listen() throws a C++ exception if the port is taken — catch and retry.
+    var bound = false;
+    while (port <= MAX_PORT) {
+        try {
+            server.listen(port);
+            bound = true;
+            break;
+        } catch (e) {
+            console.log("[" + PLUGIN_NAME + "] Port " + port + " in use, trying next...");
+            server = network.createListener();
+            port++;
+        }
+    }
+
+    if (!bound) {
+        console.log("[" + PLUGIN_NAME + "] ERROR: Could not bind to any port from " + BASE_PORT + " upward");
+        return;
+    }
+
+    console.log("[" + PLUGIN_NAME + "] TCP server listening on port " + port);
 
     server.on("connection", function (conn) {
         console.log("[" + PLUGIN_NAME + "] Client connected");
@@ -109,9 +133,6 @@ function startServer(): void {
             console.log("[" + PLUGIN_NAME + "] Connection error");
         });
     });
-
-    server.listen(PORT);
-    console.log("[" + PLUGIN_NAME + "] TCP server listening on port " + PORT);
 }
 
 // ── Entry point ──────────────────────────────────────────────────────
