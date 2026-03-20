@@ -4,11 +4,11 @@ OpenRCT2 plugin exposing game actions, state queries, and tick-stepping over TCP
 
 ## Protocol
 
-JSON-over-TCP, newline-delimited, port 9090.
+JSON-over-TCP, newline-delimited. The plugin binds to the first available port starting at `20020`, incrementing until a free port is found. The bound port is logged to console.
 
-```json
-{"endpoint": "park.cash"}
-{"success": true, "payload": 10000}
+```
+Send:  {"endpoint": "park.cash"}\n
+Recv:  {"success": true, "payload": 10000}\n
 ```
 
 ## Endpoints
