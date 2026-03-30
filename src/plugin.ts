@@ -3,6 +3,7 @@
 import * as actions from "./actions";
 import * as timeControl from "./time-control";
 import * as state from "./state";
+import * as world from "./world";
 
 var BASE_PORT = 20020;
 var MAX_PORT = 65535;
@@ -60,6 +61,11 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
 
     // State queries (sync reads)
     if (state.handleQuery(request.endpoint, request.params, reply)) {
+        return;
+    }
+
+    // World queries (hand-written, uses generated serializers)
+    if (world.handleWorldQuery(request.endpoint, request.params, reply)) {
         return;
     }
 
