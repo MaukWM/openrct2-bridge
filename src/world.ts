@@ -21,6 +21,25 @@ export function handleWorldQuery(endpoint: string, params: any, reply: (response
             reply({ success: true, payload: { x: params.x, y: params.y, elements: elements } });
             return true;
         }
+        case "get_tiles": {
+            var x1 = params.x1 as number;
+            var y1 = params.y1 as number;
+            var x2 = params.x2 as number;
+            var y2 = params.y2 as number;
+            var tiles: object[] = [];
+            for (var tx = x1; tx <= x2; tx++) {
+                for (var ty = y1; ty <= y2; ty++) {
+                    var t = map.getTile(tx, ty);
+                    var elems: object[] = [];
+                    for (var ei = 0; ei < t.numElements; ei++) {
+                        elems.push(serializeTileElement(t.getElement(ei)));
+                    }
+                    tiles.push({ x: tx, y: ty, elements: elems });
+                }
+            }
+            reply({ success: true, payload: tiles });
+            return true;
+        }
         case "get_map_size":
             reply({ success: true, payload: { x: map.size.x, y: map.size.y } });
             return true;

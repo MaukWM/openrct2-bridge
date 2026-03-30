@@ -8,7 +8,7 @@ import * as world from "./world";
 var BASE_PORT = 20020;
 var MAX_PORT = 65535;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.2.0";
+var PLUGIN_VERSION = "1.3.0";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
