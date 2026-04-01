@@ -3,6 +3,24 @@
 // Hand-written object management endpoints.
 // Uses ObjectManager API to query loaded objects and load new ones.
 
+function serializeLoadedObject(obj: LoadedObject, objType: string): object {
+    if (objType === "ride") {
+        var ro = obj as RideObject;
+        return {
+            index: ro.index,
+            identifier: ro.identifier,
+            name: ro.name,
+            rideType: ro.rideType,
+            carsPerFlatRide: ro.carsPerFlatRide,
+        };
+    }
+    return {
+        index: obj.index,
+        identifier: obj.identifier,
+        name: obj.name,
+    };
+}
+
 /**
  * Handle object management endpoints.
  *
@@ -12,37 +30,34 @@ export function handleObjectQuery(endpoint: string, params: any, reply: (respons
     switch (endpoint) {
         case "get_objects": {
             var objType = params.type as string;
-            if (objType === "ride") {
-                var allRideObjects = objectManager.getAllObjects("ride");
-                var result: object[] = [];
-                for (var i = 0; i < allRideObjects.length; i++) {
-                    var ro = allRideObjects[i];
-                    if (ro != null) {
-                        result.push({
-                            index: ro.index,
-                            identifier: ro.identifier,
-                            name: ro.name,
-                            rideType: ro.rideType,
-                            carsPerFlatRide: ro.carsPerFlatRide,
-                        });
-                    }
+            var allObjects = objectManager.getAllObjects(objType as ObjectType);
+            var result: object[] = [];
+            for (var i = 0; i < allObjects.length; i++) {
+                if (allObjects[i] != null) {
+                    result.push(serializeLoadedObject(allObjects[i], objType));
                 }
-                reply({ success: true, payload: result });
-            } else {
-                // Generic path for non-ride object types
-                var allObjects = objectManager.getAllObjects(objType as ObjectType);
-                var genericResult: object[] = [];
-                for (var j = 0; j < allObjects.length; j++) {
-                    var obj = allObjects[j];
-                    if (obj != null) {
-                        genericResult.push({
-                            index: obj.index,
-                            identifier: obj.identifier,
-                            name: obj.name,
-                        });
-                    }
+            }
+            reply({ success: true, payload: result });
+            return true;
+        }
+        case "get_object": {
+            var getObjType = params.type as string;
+            var getObjId = params.identifier as string;
+            var searchObjects = objectManager.getAllObjects(getObjType as ObjectType);
+            var found = false;
+            for (var si = 0; si < searchObjects.length; si++) {
+                if (searchObjects[si] != null && searchObjects[si].identifier === getObjId) {
+                    reply({ success: true, payload: serializeLoadedObject(searchObjects[si], getObjType) });
+                    found = true;
+                    break;
                 }
-                reply({ success: true, payload: genericResult });
+            }
+            if (!found) {
+                reply({
+                    success: false,
+                    error: "not_loaded",
+                    message: "Object not loaded: " + getObjId,
+                });
             }
             return true;
         }
