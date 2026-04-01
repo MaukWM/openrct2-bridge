@@ -9,7 +9,7 @@ import * as world from "./world";
 var BASE_PORT = 20020;
 var MAX_PORT = 65535;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.4.1";
+var PLUGIN_VERSION = "1.4.2";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ function startServer(): void {
                         conn.write(JSON.stringify(response) + "\n");
                     });
                 } catch (e) {
-                    conn.write(JSON.stringify({ success: false, error: String(e) }) + "\n");
+                    conn.write(JSON.stringify({ success: false, error: "parse_error", message: String(e) }) + "\n");
                 }
             }
         });

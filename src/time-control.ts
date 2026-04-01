@@ -30,11 +30,11 @@ export function initScenarioTracking(): void {
 function advanceTicks(params: { ticks?: number } | undefined, reply: (response: object) => void): void {
     var ticks = params && params.ticks;
     if (typeof ticks !== "number" || ticks < 1 || Math.floor(ticks) !== ticks) {
-        reply({ success: false, error: "params.ticks must be a positive integer" });
+        reply({ success: false, error: "invalid_params", message: "params.ticks must be a positive integer" });
         return;
     }
     if (_advancing) {
-        reply({ success: false, error: "advance_ticks already in progress" });
+        reply({ success: false, error: "already_in_progress", message: "advance_ticks already in progress" });
         return;
     }
 
