@@ -1,6 +1,7 @@
 /// <reference path="../lib/openrct2.d.ts" />
 
 import * as actions from "./actions";
+import * as objects from "./objects";
 import * as timeControl from "./time-control";
 import * as state from "./state";
 import * as world from "./world";
@@ -8,7 +9,7 @@ import * as world from "./world";
 var BASE_PORT = 20020;
 var MAX_PORT = 65535;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.3.0";
+var PLUGIN_VERSION = "1.4.0";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
@@ -66,6 +67,11 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
 
     // World queries (hand-written, uses generated serializers)
     if (world.handleWorldQuery(request.endpoint, request.params, reply)) {
+        return;
+    }
+
+    // Object management (hand-written)
+    if (objects.handleObjectQuery(request.endpoint, request.params, reply)) {
         return;
     }
 
