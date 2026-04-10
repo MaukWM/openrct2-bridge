@@ -40,6 +40,26 @@ export function handleWorldQuery(endpoint: string, params: any, reply: (response
             reply({ success: true, payload: tiles });
             return true;
         }
+        case "get_paths": {
+            var paths: object[] = [];
+            var mapSize = map.size;
+            for (var px = 1; px < mapSize.x - 1; px++) {
+                for (var py = 1; py < mapSize.y - 1; py++) {
+                    var pt = map.getTile(px, py);
+                    for (var pi = 0; pi < pt.numElements; pi++) {
+                        var pe = pt.getElement(pi);
+                        if (pe.type === "footpath") {
+                            var serialized = serializeTileElement(pe) as any;
+                            serialized.tileX = px;
+                            serialized.tileY = py;
+                            paths.push(serialized);
+                        }
+                    }
+                }
+            }
+            reply({ success: true, payload: paths });
+            return true;
+        }
         case "get_map_size":
             reply({ success: true, payload: { x: map.size.x, y: map.size.y } });
             return true;
