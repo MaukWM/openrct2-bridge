@@ -40,37 +40,13 @@ export function handleWorldQuery(endpoint: string, params: any, reply: (response
             reply({ success: true, payload: tiles });
             return true;
         }
-        case "get_paths": {
-            var paths: object[] = [];
-            var mapSize = map.size;
-            for (var px = 1; px < mapSize.x - 1; px++) {
-                for (var py = 1; py < mapSize.y - 1; py++) {
-                    var pt = map.getTile(px, py);
-                    for (var pi = 0; pi < pt.numElements; pi++) {
-                        var pe = pt.getElement(pi);
-                        if (pe.type === "footpath") {
-                            var serialized = serializeTileElement(pe) as any;
-                            serialized.tileX = px;
-                            serialized.tileY = py;
-                            paths.push(serialized);
-                        }
-                    }
-                }
-            }
-            reply({ success: true, payload: paths });
-            return true;
-        }
         case "get_elements_by_type": {
             // Flat list of serialized elements with tile coords attached.
-            // Scans full map (or optional bbox).
             var eType = params.type as string;
-            var ex1 = (params.x1 != null ? params.x1 : 0) as number;
-            var ey1 = (params.y1 != null ? params.y1 : 0) as number;
-            var ex2 = (params.x2 != null ? params.x2 : map.size.x - 1) as number;
-            var ey2 = (params.y2 != null ? params.y2 : map.size.y - 1) as number;
+            var mapSize = map.size;
             var elements: object[] = [];
-            for (var etx = ex1; etx <= ex2; etx++) {
-                for (var ety = ey1; ety <= ey2; ety++) {
+            for (var etx = 0; etx < mapSize.x; etx++) {
+                for (var ety = 0; ety < mapSize.y; ety++) {
                     var et = map.getTile(etx, ety);
                     for (var ei = 0; ei < et.numElements; ei++) {
                         var ee = et.getElement(ei);
