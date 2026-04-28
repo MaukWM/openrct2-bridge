@@ -3,7 +3,7 @@
 // Hand-written world query endpoints.
 // Serializers (serializeTileElement etc.) are auto-generated in state.ts.
 
-import { serializeTileElement } from "./state";
+import { serializeTileElement } from "./generated/state";
 
 /**
  * Handle world query endpoints.

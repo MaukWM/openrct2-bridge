@@ -1,15 +1,16 @@
 /// <reference path="../lib/openrct2.d.ts" />
 
-import * as actions from "./actions";
+import * as actions from "./generated/actions";
 import * as objects from "./objects";
 import * as timeControl from "./time-control";
-import * as state from "./state";
+import * as state from "./generated/state";
+import * as trackEnrichment from "./track-enrichment";
 import * as world from "./world";
 
 var BASE_PORT = 20020;
 var MAX_PORT = 65535;
 var PLUGIN_NAME = "openrct2-bridge";
-var PLUGIN_VERSION = "1.6.1";
+var PLUGIN_VERSION = "1.7.0";
 
 // ── Built-in endpoints ───────────────────────────────────────────────
 
@@ -52,6 +53,14 @@ function handleRequest(request: { endpoint: string; params?: object }, reply: (r
 
     // Time control module (may be async)
     if (timeControl.handleTimeControl(request.endpoint, request.params, reply)) {
+        return;
+    }
+
+    // Track enrichment (intercepts trackplace + track_get_state before generic actions)
+    if (trackEnrichment.handleTrackPlace(request.endpoint, request.params, reply)) {
+        return;
+    }
+    if (trackEnrichment.handleTrackQuery(request.endpoint, request.params, reply)) {
         return;
     }
 
