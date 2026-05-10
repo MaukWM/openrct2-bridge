@@ -15,6 +15,7 @@
 
 import {
     getValidNextSegments,
+    getSpecialNextSegment,
 } from "./generated/track-groups";
 
 var TILE_SIZE = 32;
@@ -241,9 +242,17 @@ export function handleTrackPlace(
             // decrease for downslopes (returns placement origin z, not exit z).
             enriched.cursor = null;
             if (result.position) {
+                // Try result.position first, then params position as fallback
+                // (multi-tile pieces like corkscrews may report position on a non-origin tile)
                 var placedTileX = Math.floor(result.position.x / TILE_SIZE);
                 var placedTileY = Math.floor(result.position.y / TILE_SIZE);
-                var elemIdx = findTrackElementOnTile(placedTileX, placedTileY, params.ride, result.position.z);
+                var elemIdx = findTrackElementOnTile(placedTileX, placedTileY, params.ride);
+                if (elemIdx < 0) {
+                    // Fallback: try the params position (where we requested placement)
+                    placedTileX = Math.floor(params.x / TILE_SIZE);
+                    placedTileY = Math.floor(params.y / TILE_SIZE);
+                    elemIdx = findTrackElementOnTile(placedTileX, placedTileY, params.ride);
+                }
                 if (elemIdx >= 0) {
                     var iterPos = { x: placedTileX * TILE_SIZE, y: placedTileY * TILE_SIZE };
                     var iter: TrackIterator | null = null;
@@ -267,10 +276,21 @@ export function handleTrackPlace(
                 }
             }
 
-            var validTypes = getValidNextSegments(rideType, endSlope, endBank, false);
-            // Include beginZ for each valid type so pyrct2 can adjust placement z.
-            // TrackPlaceAction expects baseZ, and baseZ = connectionZ - beginZ.
+            var validTypes = getValidNextSegments(rideType, endSlope, endBank, false, false);
+
+            // Add special chained piece (loops, corkscrews, barrel rolls)
+            var special = getSpecialNextSegment(trackType, rideType, false);
+            if (special >= 0) {
+                var hasDup = false;
+                for (var di = 0; di < validTypes.length; di++) {
+                    if (validTypes[di] === special) { hasDup = true; break; }
+                }
+                if (!hasDup) validTypes.push(special);
+            }
+
             enriched.validNext = validTypes;
+
+            // Include beginZ for each valid type so pyrct2 can adjust placement z.
             var beginZMap: any = {};
             for (var vi = 0; vi < validTypes.length; vi++) {
                 var vSeg = context.getTrackSegment(validTypes[vi]);
@@ -282,6 +302,8 @@ export function handleTrackPlace(
 
             reply(enriched);
         } catch (e) {
+            // Track was placed but enrichment failed. Return bare response
+            // with all fields pyrct2 expects to avoid crashes.
             reply({
                 success: true,
                 cost: result.cost,
@@ -289,6 +311,7 @@ export function handleTrackPlace(
                 endSlope: 0,
                 endBank: 0,
                 validNext: [],
+                beginZMap: {},
                 cursor: null,
             });
         }
@@ -339,7 +362,16 @@ export function handleTrackQuery(
             }
         }
 
-        var validNext = getValidNextSegments(rideType, endSlope, endBank, false);
+        var validNext = getValidNextSegments(rideType, endSlope, endBank, false, false);
+
+        // beginZ lookup for valid types
+        var beginZMap: any = {};
+        for (var bzi = 0; bzi < validNext.length; bzi++) {
+            var bzSeg = context.getTrackSegment(validNext[bzi]);
+            if (bzSeg && bzSeg.beginZ !== 0) {
+                beginZMap[validNext[bzi]] = bzSeg.beginZ;
+            }
+        }
 
         reply({
             success: true,
@@ -348,6 +380,7 @@ export function handleTrackQuery(
                 endSlope: endSlope,
                 endBank: endBank,
                 validNext: validNext,
+                beginZMap: beginZMap,
                 circuitComplete: walkResult ? walkResult.circuitComplete : false,
                 pieceCount: walkResult ? walkResult.pieceCount : 0,
             },
