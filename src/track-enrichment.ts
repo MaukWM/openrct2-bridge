@@ -69,11 +69,11 @@ function walkFromStation(rideId: number): {
 
         var tileX = Math.floor(start.x / TILE_SIZE);
         var tileY = Math.floor(start.y / TILE_SIZE);
-        var elemIdx = findTrackElementOnTile(tileX, tileY, rideId, start.z);
+        var elemIdx = findTrackElementOnTile(tileX, tileY, rideId);
         if (elemIdx < 0) continue;
 
         var iter: TrackIterator | null;
-        try { iter = map.getTrackIterator({ x: tileX, y: tileY }, elemIdx); } catch (e) { continue; }
+        try { iter = map.getTrackIterator({ x: tileX * TILE_SIZE, y: tileY * TILE_SIZE }, elemIdx); } catch (e) { continue; }
         if (!iter) continue;
 
         var startPos = iter.position;
@@ -236,11 +236,49 @@ export function handleTrackPlace(
             enriched.endSlope = endSlope;
             enriched.endBank = endBank;
 
-            enriched.cursor = computeNextPosition(
-                params.x, params.y, params.z, params.direction, trackType
-            );
+            // Use TrackIterator for x, y, direction (handles multi-tile turns correctly).
+            // But compute z from segment endZ, because iterator.nextPosition.z doesn't
+            // decrease for downslopes (returns placement origin z, not exit z).
+            enriched.cursor = null;
+            if (result.position) {
+                var placedTileX = Math.floor(result.position.x / TILE_SIZE);
+                var placedTileY = Math.floor(result.position.y / TILE_SIZE);
+                var elemIdx = findTrackElementOnTile(placedTileX, placedTileY, params.ride, result.position.z);
+                if (elemIdx >= 0) {
+                    var iterPos = { x: placedTileX * TILE_SIZE, y: placedTileY * TILE_SIZE };
+                    var iter: TrackIterator | null = null;
+                    try { iter = map.getTrackIterator(iterPos, elemIdx); } catch (e) { /* ignore */ }
+                    if (iter && iter.nextPosition) {
+                        // Cursor z = connection height (exit z of placed piece).
+                        // This is params.z + endZ, matching TrackDesign.cpp:1711:
+                        //   newCoords.z = newCoords.z - zBegin + zEnd
+                        // pyrct2 subtracts the NEXT piece's beginZ before placement.
+                        var cursorZ = params.z;
+                        if (segment) {
+                            cursorZ = params.z + segment.endZ;
+                        }
+                        enriched.cursor = {
+                            x: iter.nextPosition.x,
+                            y: iter.nextPosition.y,
+                            z: cursorZ,
+                            direction: iter.nextPosition.direction,
+                        };
+                    }
+                }
+            }
 
-            enriched.validNext = getValidNextSegments(rideType, endSlope, endBank, false);
+            var validTypes = getValidNextSegments(rideType, endSlope, endBank, false);
+            // Include beginZ for each valid type so pyrct2 can adjust placement z.
+            // TrackPlaceAction expects baseZ, and baseZ = connectionZ - beginZ.
+            enriched.validNext = validTypes;
+            var beginZMap: any = {};
+            for (var vi = 0; vi < validTypes.length; vi++) {
+                var vSeg = context.getTrackSegment(validTypes[vi]);
+                if (vSeg && vSeg.beginZ !== 0) {
+                    beginZMap[validTypes[vi]] = vSeg.beginZ;
+                }
+            }
+            enriched.beginZMap = beginZMap;
 
             reply(enriched);
         } catch (e) {
